@@ -50,7 +50,7 @@ const footerData = {
 
 const Footer = () => {
   return (
-    <footer className="relative bg-black text-white">
+    <footer className="bg-black/80 text-white py-6 text-center rounded-t-xl mt-19">
       <div className="absolute inset-0 pointer-events-none">
         <div className="w-full h-full grid grid-cols-20 grid-rows-20 gap-0.2">
           {Array.from({ length: 400 }).map((_, idx) => (

@@ -11,18 +11,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isAdmin = pathname.startsWith("/admin");
+  const isApp = pathname.startsWith("/app");
 
   return (
     <html lang="en">
       <body className="bg-gray-50">
         {/* Navbar only for website */}
-        {!isAdmin && <Navbar />}
-
+        {!isApp && <Navbar />}
         <main className="min-h-screen">{children}</main>
 
         {/* Footer only for website */}
-        {!isAdmin && <Footer />}
+        {!isApp && <Footer />}
       </body>
     </html>
   );

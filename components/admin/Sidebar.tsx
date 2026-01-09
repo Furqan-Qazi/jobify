@@ -63,7 +63,7 @@ const Sidebar = () => {
   ];
 
   return (
-    <aside className="fixed top-20 left-0 w-70 h-[calc(100vh-5rem)] bg-gray-900 text-white p-6 overflow-y-auto shadow-lg">
+    <aside className="fixed left-0 w-70 h-[calc(100vh)] bg-gray-900 text-white p-6 overflow-y-auto shadow-lg">
       {/* PROFILE SECTION */}
       <div className="flex flex-col items-center mb-8">
         <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-lime-400 shadow-md">

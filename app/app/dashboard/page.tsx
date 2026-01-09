@@ -10,8 +10,6 @@ import RecentPosted from "@/components/admin/dashboard/RecentPosted";
 export default function AdminDashboardPage() {
   return (
     <div className="space-y-8 ml-4">
-      {/* Page Title */}
-      <h2 className="text-2xl font-bold">Admin Dashboard</h2>
 
       {/* 3 Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-5">

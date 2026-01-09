@@ -11,14 +11,14 @@ export default function AdminLayout({
   return (
     <div className="h-screen bg-gray-100">
       {/* TOPBAR */}
-      <Topbar />
+      {/* <Topbar /> */}
 
-      <div className="flex pt-20">
+      <div className="flex">
         {/* SIDEBAR */}
         <Sidebar />
 
         {/* MAIN CONTENT */}
-        <main className="ml-64 w-full h-[calc(100vh-5rem)] overflow-y-auto p-6">
+        <main className="ml-64 w-full h-[calc(100vh)] overflow-y-auto p-6">
           {children}
         </main>
       </div>

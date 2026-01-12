@@ -1,9 +1,10 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import InputField from "../../../components/global/InputField";
 import TextAreaField from "../../../components/global/TextAreaField";
-import { useState } from "react";
-import { FaTrashAlt, FaPlus, FaEdit } from "react-icons/fa"; // icons
+import CustomButton from "../../../components/global/Button";
+import { Plus, Pencil, Trash2, Save } from "lucide-react";
 
 type Education = {
   id: string;
@@ -14,10 +15,20 @@ type Education = {
   to: string;
   description: string;
 };
+type Experience = {
+  id: string;
+  company: string;
+  jobTitle: string;
+  from: string;
+  to: string;
+  description: string;
+};
+type Skill = { id: string; name: string };
 
-export default function EducationSection() {
-  const [list, setList] = useState<Education[]>([]);
-  const [form, setForm] = useState<Education>({
+export default function ProfileSections() {
+  // === Education ===
+  const [eduList, setEduList] = useState<Education[]>([]);
+  const [eduForm, setEduForm] = useState<Education>({
     id: "",
     school: "",
     degree: "",
@@ -26,22 +37,29 @@ export default function EducationSection() {
     to: "",
     description: "",
   });
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingEduId, setEditingEduId] = useState<string | null>(null);
 
-  const addEducation = () => {
-    if (!form.school || !form.degree || !form.from) return;
+  const addOrUpdateEducation = () => {
+    if (!eduForm.school || !eduForm.degree) return;
 
-    if (editingId) {
-      // EDIT
-      setList((prev) =>
-        prev.map((e) => (e.id === editingId ? { ...form, id: editingId } : e))
+    if (editingEduId) {
+      // Edit existing
+      setEduList((prev) =>
+        prev.map((e) =>
+          e.id === editingEduId ? { ...eduForm, id: editingEduId } : e
+        )
       );
-      setEditingId(null);
     } else {
-      setList((prev) => [...prev, { ...form, id: Date.now().toString() }]);
+      // Add new
+      setEduList((prev) => [
+        ...prev,
+        { ...eduForm, id: Date.now().toString() },
+      ]);
     }
 
-    setForm({
+    // Reset form
+    setEditingEduId(null);
+    setEduForm({
       id: "",
       school: "",
       degree: "",
@@ -52,110 +70,255 @@ export default function EducationSection() {
     });
   };
 
-  const removeEducation = (id: string) => {
-    setList((prev) => prev.filter((e) => e.id !== id));
+  const editEducation = (e: Education) => {
+    setEduForm(e);
+    setEditingEduId(e.id);
   };
 
-  const editEducation = (e: Education) => {
-    setForm(e);
-    setEditingId(e.id);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  const removeEducation = (id: string) =>
+    setEduList((prev) => prev.filter((e) => e.id !== id));
+  const saveEducation = () => {
+    localStorage.setItem("eduList", JSON.stringify(eduList));
+    alert("Education saved!");
   };
+
+  // === Experience ===
+  const [expList, setExpList] = useState<Experience[]>([]);
+  const [expForm, setExpForm] = useState<Experience>({
+    id: "",
+    company: "",
+    jobTitle: "",
+    from: "",
+    to: "",
+    description: "",
+  });
+  const [editingExpId, setEditingExpId] = useState<string | null>(null);
+
+  const addOrUpdateExperience = () => {
+    if (!expForm.company || !expForm.jobTitle) return;
+
+    if (editingExpId) {
+      setExpList((prev) =>
+        prev.map((e) =>
+          e.id === editingExpId ? { ...expForm, id: editingExpId } : e
+        )
+      );
+    } else {
+      setExpList((prev) => [
+        ...prev,
+        { ...expForm, id: Date.now().toString() },
+      ]);
+    }
+
+    setEditingExpId(null);
+    setExpForm({
+      id: "",
+      company: "",
+      jobTitle: "",
+      from: "",
+      to: "",
+      description: "",
+    });
+  };
+
+  const editExperience = (e: Experience) => {
+    setExpForm(e);
+    setEditingExpId(e.id);
+  };
+  const removeExperience = (id: string) =>
+    setExpList((prev) => prev.filter((e) => e.id !== id));
+  const saveExperience = () => {
+    localStorage.setItem("expList", JSON.stringify(expList));
+    alert("Experience saved!");
+  };
+
+  // === Skills ===
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [skillInput, setSkillInput] = useState("");
+  const [editingSkillId, setEditingSkillId] = useState<string | null>(null);
+
+  const addOrUpdateSkill = () => {
+    if (!skillInput.trim()) return;
+
+    const updatedSkills = editingSkillId
+      ? skills.map((s) =>
+          s.id === editingSkillId ? { id: editingSkillId, name: skillInput } : s
+        )
+      : [...skills, { id: Date.now().toString(), name: skillInput }];
+
+    setSkills(updatedSkills);
+    setEditingSkillId(null);
+    setSkillInput("");
+  };
+
+  const editSkill = (s: Skill) => {
+    setSkillInput(s.name);
+    setEditingSkillId(s.id);
+  };
+  const removeSkill = (id: string) =>
+    setSkills((prev) => prev.filter((s) => s.id !== id));
+  const saveSkills = () => {
+    localStorage.setItem("skills", JSON.stringify(skills));
+    alert("Skills saved!");
+  };
+
+  // === Load on mount ===
+  useEffect(() => {
+    const storedEdu = localStorage.getItem("eduList");
+    const storedExp = localStorage.getItem("expList");
+    const storedSkills = localStorage.getItem("skills");
+    if (storedEdu) setEduList(JSON.parse(storedEdu));
+    if (storedExp) setExpList(JSON.parse(storedExp));
+    if (storedSkills) setSkills(JSON.parse(storedSkills));
+  }, []);
 
   return (
-    <section className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8 space-y-8">
-      <h2 className="text-3xl font-bold border-b pb-2">🎓 Education</h2>
-
-      {/* LIST */}
+    <section className="max-w-5xl mx-auto p-8 space-y-14">
+      {/* Education */}
       <div className="space-y-4">
-        {list.map((e) => (
-          <div
-            key={e.id}
-            className="flex justify-between items-start p-4 border rounded-lg hover:shadow-lg transition-shadow duration-300"
-          >
-            <div className="space-y-1">
-              <h3 className="font-semibold text-lg">{e.school}</h3>
-              <p className="text-sm text-gray-700">
+        <h2 className="text-2xl font-bold">🎓 Education</h2>
+        {eduList.map((e) => (
+          <div key={e.id} className="flex justify-between p-2 border rounded">
+            <div>
+              <h3 className="font-semibold">{e.school}</h3>
+              <p>
                 {e.degree} — {e.field || "N/A"}
               </p>
-              <p className="text-xs text-gray-500">
-                {e.from} – {e.to || "Present"}
-              </p>
-              {e.description && <p className="text-sm mt-2">{e.description}</p>}
             </div>
-            <div className="flex gap-2 mt-1">
-              <button
-                onClick={() => editEducation(e)}
-                className="text-blue-500 hover:text-blue-700"
-                title="Edit"
-              >
-                <FaEdit />
+            <div className="flex gap-2">
+              <button onClick={() => editEducation(e)}>
+                <Pencil size={16} />
               </button>
-              <button
-                onClick={() => removeEducation(e.id)}
-                className="text-red-500 hover:text-red-700"
-                title="Remove"
-              >
-                <FaTrashAlt />
+              <button onClick={() => removeEducation(e.id)}>
+                <Trash2 size={16} />
               </button>
             </div>
           </div>
         ))}
-      </div>
-
-      {/* FORM */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-10 p-6 rounded-lg shadow-inner">
         <InputField
-          label="Fill The Form"
-          placeholder="School / University"
-          value={form.school}
-          setValue={(value) => setForm({ ...form, school: value })}
+          placeholder="School"
+          value={eduForm.school}
+          setValue={(v) => setEduForm({ ...eduForm, school: v })}
         />
-
         <InputField
-          className="input mt-5"
           placeholder="Degree"
-          value={form.degree}
-          setValue={(value) => setForm({ ...form, degree: value })}
+          value={eduForm.degree}
+          setValue={(v) => setEduForm({ ...eduForm, degree: v })}
         />
-
         <InputField
-          className="input md:col-span-2"
-          placeholder="Field of Study"
-          value={form.field}
-          setValue={(value) => setForm({ ...form, field: value })}
+          placeholder="Field"
+          value={eduForm.field}
+          setValue={(v) => setEduForm({ ...eduForm, field: v })}
         />
-
-        <InputField
-          className="input"
-          placeholder="From (e.g. 2021)"
-          value={form.from}
-          setValue={(value) => setForm({ ...form, from: value })}
-        />
-
-        <InputField
-          className="input"
-          placeholder="To (e.g. 2025)"
-          value={form.to}
-          setValue={(value) => setForm({ ...form, to: value })}
-        />
-
         <TextAreaField
-          className="input md:col-span-2"
-          placeholder="Description / Achievements"
-          rows={4}
-          value={form.description}
-          setValue={(value) => setForm({ ...form, description: value })}
+          placeholder="Description"
+          value={eduForm.description}
+          setValue={(v) => setEduForm({ ...eduForm, description: v })}
+          rows={3}
         />
+        <div className="flex gap-2">
+          <CustomButton
+            text={editingEduId ? "Update" : "Add"}
+            icon={Plus}
+            onClick={addOrUpdateEducation}
+          />
+          <CustomButton
+            text="Save"
+            icon={Save}
+            bgColor="bg-green-600"
+            onClick={saveEducation}
+          />
+        </div>
       </div>
 
-      <button
-        onClick={addEducation}
-        className="flex items-center gap-2 bg-black text-white px-6 py-3 rounded-lg hover:opacity-90 transition-all"
-      >
-        <FaPlus />
-        {editingId ? "Update Education" : "Add Education"}
-      </button>
+      {/* Experience */}
+      <div className="space-y-4">
+        <h2 className="text-2xl font-bold">💼 Experience</h2>
+        {expList.map((e) => (
+          <div key={e.id} className="flex justify-between p-2 border rounded">
+            <div>
+              <h3 className="font-semibold">{e.jobTitle}</h3>
+              <p>{e.company}</p>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => editExperience(e)}>
+                <Pencil size={16} />
+              </button>
+              <button onClick={() => removeExperience(e.id)}>
+                <Trash2 size={16} />
+              </button>
+            </div>
+          </div>
+        ))}
+        <InputField
+          placeholder="Company"
+          value={expForm.company}
+          setValue={(v) => setExpForm({ ...expForm, company: v })}
+        />
+        <InputField
+          placeholder="Job Title"
+          value={expForm.jobTitle}
+          setValue={(v) => setExpForm({ ...expForm, jobTitle: v })}
+        />
+        <TextAreaField
+          placeholder="Responsibilities"
+          value={expForm.description}
+          setValue={(v) => setExpForm({ ...expForm, description: v })}
+          rows={3}
+        />
+        <div className="flex gap-2">
+          <CustomButton
+            text={editingExpId ? "Update" : "Add"}
+            icon={Plus}
+            onClick={addOrUpdateExperience}
+          />
+          <CustomButton
+            text="Save"
+            icon={Save}
+            bgColor="bg-green-600"
+            onClick={saveExperience}
+          />
+        </div>
+      </div>
+
+      {/* Skills */}
+      <div className="space-y-4">
+        <h2 className="text-2xl font-bold">🛠 Skills</h2>
+        <div className="flex gap-2">
+          <InputField
+            placeholder="Skill"
+            value={skillInput}
+            setValue={setSkillInput}
+          />
+          <CustomButton
+            text={editingSkillId ? "Update" : "Add"}
+            icon={Plus}
+            onClick={addOrUpdateSkill}
+          />
+          <CustomButton
+            text="Save"
+            icon={Save}
+            bgColor="bg-green-600"
+            onClick={saveSkills}
+          />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {skills.map((s) => (
+            <div
+              key={s.id}
+              className="flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full"
+            >
+              <span>{s.name}</span>
+              <button onClick={() => editSkill(s)}>
+                <Pencil size={14} />
+              </button>
+              <button onClick={() => removeSkill(s.id)}>
+                <Trash2 size={14} />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
     </section>
   );
 }

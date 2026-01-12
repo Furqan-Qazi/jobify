@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, BellDot } from "lucide-react";
 import CustomButton from "@/components/global/Button";
-import { supabase } from "@/lib/supabaseClient";
-import { createFirstAccount } from "@/lib/dummySignup";
+import { supabase } from "@/src/lib/supabaseClient";
+import { createFirstAccount } from "@/src/lib/dummySignup";
 
 // Navbar Component
 const Navbar: React.FC = () => {

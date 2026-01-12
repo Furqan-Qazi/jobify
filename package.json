@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "types:supabase": "supabase gen types typescript --project-id wqycymingqnrthaacipj --schema public > src/types/supabase.ts",
     "lint": "eslint"
   },
   "dependencies": {
@@ -23,6 +24,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.0.8",
+    "supabase": "^2.72.4",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

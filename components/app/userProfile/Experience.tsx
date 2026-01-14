@@ -65,8 +65,17 @@ export default function ExperienceSection() {
 
   return (
     <section className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8 space-y-8">
-      <h2 className="text-3xl text-gray-700 font-bold border-b pb-2">Experience</h2>
+      <div className="flex items-center justify-between border-b pb-2">
+        <h2 className="text-3xl text-gray-700 font-bold">Experience</h2>
 
+        <button
+          onClick={addExperienceHandler}
+          className="flex items-center gap-2 bg-zinc-700 text-white px-4 py-2 rounded-lg hover:bg-zinc-900"
+        >
+          <Plus className="w-4 h-4" />
+          Save
+        </button>
+      </div>
       {/* LIST */}
       <div className="space-y-4">
         {list.map((e) => (
@@ -75,14 +84,18 @@ export default function ExperienceSection() {
             className="flex justify-between items-start p-4 border rounded-lg hover:shadow-lg transition-shadow duration-300"
           >
             <div className="space-y-1">
-              <h3 className="font-semibold text-gray-700 text-lg">{e.company}</h3>
+              <h3 className="font-semibold text-gray-700 text-lg">
+                {e.company}
+              </h3>
               <p className="text-sm text-gray-700">
                 {e.jobTitle} — {e.company || "N/A"}
               </p>
               <p className="text-xs text-gray-500">
                 {e.from} – {e.to || "Present"}
               </p>
-              {e.description && <p className="text-sm mt-2 text-gray-500">{e.description}</p>}
+              {e.description && (
+                <p className="text-sm mt-2 text-gray-500">{e.description}</p>
+              )}
             </div>
             <div className="flex gap-2 mt-1">
               <button
@@ -104,66 +117,78 @@ export default function ExperienceSection() {
         ))}
       </div>
 
-      {!addExperience && <div className="p-6 ring-2 hover:ring-lime-500 text-center bg-gray-50 rounded-lg cursor-pointer hover:shadow-md transition-all duration-300 text-zinc- hover:text-lime-500" onClick={() => setAddExperience(!addExperience)}>
-        <Plus className="w-6 h-6 inline-block" />
-      </div>}
+      {!addExperience && (
+        <div
+          className="p-6 ring-2 hover:ring-lime-500 text-center bg-gray-50 rounded-lg cursor-pointer hover:shadow-md transition-all duration-300 text-zinc- hover:text-lime-500"
+          onClick={() => setAddExperience(!addExperience)}
+        >
+          <Plus className="w-6 h-6 inline-block" />
+        </div>
+      )}
 
       {/* FORM */}
-      {addExperience && <>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-10 p-6 rounded-lg bg-gray-50">
-          <InputField
-            label="Add another expereince"
-            placeholder="Company Name"
-            value={form.company}
-            setValue={(value) => setForm({ ...form, company: value.toString() })}
-          />
+      {addExperience && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-10 p-6 rounded-lg bg-gray-50">
+            <InputField
+              label="Add another expereince"
+              placeholder="Company Name"
+              value={form.company}
+              setValue={(value) =>
+                setForm({ ...form, company: value.toString() })
+              }
+            />
 
-          <InputField
-            className="input mt-5"
-            placeholder="Job Title"
-            value={form.jobTitle}
-            setValue={(value) => setForm({ ...form, jobTitle: value.toString() })}
-          />
+            <InputField
+              className="input mt-5"
+              placeholder="Job Title"
+              value={form.jobTitle}
+              setValue={(value) =>
+                setForm({ ...form, jobTitle: value.toString() })
+              }
+            />
 
-          <InputField
-            className="input"
-            placeholder="From (e.g. 2021)"
-            value={form.from}
-            setValue={(value) => setForm({ ...form, from: value.toString() })}
-          />
+            <InputField
+              className="input"
+              placeholder="From (e.g. 2021)"
+              value={form.from}
+              setValue={(value) => setForm({ ...form, from: value.toString() })}
+            />
 
-          <InputField
-            className="input"
-            placeholder="To (e.g. 2025)"
-            value={form.to}
-            setValue={(value) => setForm({ ...form, to: value.toString() })}
-          />
+            <InputField
+              className="input"
+              placeholder="To (e.g. 2025)"
+              value={form.to}
+              setValue={(value) => setForm({ ...form, to: value.toString() })}
+            />
 
-          <TextAreaField
-            className="input md:col-span-2"
-            placeholder="Description / Responsibilities"
-            rows={4}
-            value={form.description}
-            setValue={(value) => setForm({ ...form, description: value.toString() })}
-          />
-        </div>
-        <div className="flex gap-3">
-          <button
-            onClick={addExperienceHandler}
-            className="flex items-center gap-2 bg-zinc-700 text-white px-6 py-3 rounded-lg cursor-pointer hover:bg-zinc-900 transition-all"
-          >
-            <Plus />
-            {editingId ? "Update Experience" : "Add Experience"}
-          </button>
-          <button
-            onClick={() => setAddExperience(false)}
-            className="flex items-center gap-2 bg-zinc-300 text-zinc-700 px-6 py-3 rounded-lg cursor-pointer hover:bg-zinc-100 transition-all"
-          >
-            Cancel
-          </button>
-        </div>
-      </>}
-
+            <TextAreaField
+              className="input md:col-span-2"
+              placeholder="Description / Responsibilities"
+              rows={4}
+              value={form.description}
+              setValue={(value) =>
+                setForm({ ...form, description: value.toString() })
+              }
+            />
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={addExperienceHandler}
+              className="flex items-center gap-2 bg-zinc-700 text-white px-6 py-3 rounded-lg cursor-pointer hover:bg-zinc-900 transition-all"
+            >
+              <Plus />
+              {editingId ? "Update Experience" : "Add Experience"}
+            </button>
+            <button
+              onClick={() => setAddExperience(false)}
+              className="flex items-center gap-2 bg-zinc-300 text-zinc-700 px-6 py-3 rounded-lg cursor-pointer hover:bg-zinc-100 transition-all"
+            >
+              Cancel
+            </button>
+          </div>
+        </>
+      )}
     </section>
   );
 }

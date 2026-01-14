@@ -8,7 +8,7 @@ import {
   Settings,
 } from "lucide-react";
 import CustomButton from "@/components/global/Button";
-import Card from "../global/card";
+import Card from "../global/Card";
 
 interface CardData {
   title?: React.ReactNode;

@@ -14,6 +14,7 @@ interface InputFieldProps {
   className?: string;
   error?: string | null;
   autoComplete?: string;
+  disabled?: boolean;
 }
 
 const InputField: React.FC<InputFieldProps> = ({
@@ -29,6 +30,7 @@ const InputField: React.FC<InputFieldProps> = ({
   className = "",
   error = null,
   autoComplete,
+  disabled = false, // ✅ default false
 }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (typeof setValue === "function") {
@@ -71,6 +73,7 @@ const InputField: React.FC<InputFieldProps> = ({
           value={value}
           onChange={handleChange}
           placeholder={placeholder}
+          disabled={disabled} // ✅ add disabled here
           className={`w-full px-3 py-2 ${paddingClass} rounded-lg border outline-none transition text-gray-700 focus:ring-2 focus:ring-lime-500 ${borderClass}`}
         />
 

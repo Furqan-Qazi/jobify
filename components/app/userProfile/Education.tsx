@@ -68,7 +68,17 @@ export default function EducationSection() {
 
   return (
     <section className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8 space-y-8">
-      <h2 className="text-3xl text-gray-700 font-bold border-b pb-2">Education</h2>
+      <div className="flex items-center justify-between border-b pb-2">
+        <h2 className="text-3xl text-gray-700 font-bold">Education</h2>
+
+        <button
+          onClick={addEducationHandler}
+          className="flex items-center gap-2 bg-zinc-700 text-white px-4 py-2 rounded-lg hover:bg-zinc-900"
+        >
+          <Plus className="w-4 h-4" />
+          Save
+        </button>
+      </div>
 
       {/* LIST */}
       <div className="space-y-4">
@@ -78,14 +88,18 @@ export default function EducationSection() {
             className="flex justify-between items-start p-4 border rounded-lg hover:shadow-lg transition-shadow duration-300"
           >
             <div className="space-y-1">
-              <h3 className="font-semibold text-gray-700 text-lg">{e.school}</h3>
+              <h3 className="font-semibold text-gray-700 text-lg">
+                {e.school}
+              </h3>
               <p className="text-sm text-gray-700">
                 {e.degree} — {e.field || "N/A"}
               </p>
               <p className="text-xs text-gray-500">
                 {e.from} – {e.to || "Present"}
               </p>
-              {e.description && <p className="text-sm mt-2 text-gray-500">{e.description}</p>}
+              {e.description && (
+                <p className="text-sm mt-2 text-gray-500">{e.description}</p>
+              )}
             </div>
             <div className="flex gap-2 mt-1">
               <button
@@ -107,73 +121,87 @@ export default function EducationSection() {
         ))}
       </div>
 
-      {!addEducation && <div className="p-6 ring-2 hover:ring-lime-500 text-center bg-gray-50 rounded-lg cursor-pointer hover:shadow-md transition-all duration-300 text-zinc- hover:text-lime-500" onClick={() => setAddEducation(!addEducation)}>
-        <Plus className="w-6 h-6 inline-block" />
-      </div>}
+      {!addEducation && (
+        <div
+          className="p-6 ring-2 hover:ring-lime-500 text-center bg-gray-50 rounded-lg cursor-pointer hover:shadow-md transition-all duration-300 text-zinc- hover:text-lime-500"
+          onClick={() => setAddEducation(!addEducation)}
+        >
+          <Plus className="w-6 h-6 inline-block" />
+        </div>
+      )}
 
       {/* FORM */}
-      {addEducation && <>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-10 p-6 rounded-lg bg-gray-50">
-          <InputField
-            label="Fill The Form"
-            placeholder="School / University"
-            value={form.school}
-            setValue={(value) => setForm({ ...form, school: value.toString() })}
-          />
+      {addEducation && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-10 p-6 rounded-lg bg-gray-50">
+            <InputField
+              label="Fill The Form"
+              placeholder="School / University"
+              value={form.school}
+              setValue={(value) =>
+                setForm({ ...form, school: value.toString() })
+              }
+            />
 
-          <InputField
-            className="input mt-5"
-            placeholder="Degree"
-            value={form.degree}
-            setValue={(value) => setForm({ ...form, degree: value.toString() })}
-          />
+            <InputField
+              className="input mt-5"
+              placeholder="Degree"
+              value={form.degree}
+              setValue={(value) =>
+                setForm({ ...form, degree: value.toString() })
+              }
+            />
 
-          <InputField
-            className="input md:col-span-2"
-            placeholder="Field of Study"
-            value={form.field}
-            setValue={(value) => setForm({ ...form, field: value.toString() })}
-          />
+            <InputField
+              className="input md:col-span-2"
+              placeholder="Field of Study"
+              value={form.field}
+              setValue={(value) =>
+                setForm({ ...form, field: value.toString() })
+              }
+            />
 
-          <InputField
-            className="input"
-            placeholder="From (e.g. 2021)"
-            value={form.from}
-            setValue={(value) => setForm({ ...form, from: value.toString() })}
-          />
+            <InputField
+              className="input"
+              placeholder="From (e.g. 2021)"
+              value={form.from}
+              setValue={(value) => setForm({ ...form, from: value.toString() })}
+            />
 
-          <InputField
-            className="input"
-            placeholder="To (e.g. 2025)"
-            value={form.to}
-            setValue={(value) => setForm({ ...form, to: value.toString() })}
-          />
+            <InputField
+              className="input"
+              placeholder="To (e.g. 2025)"
+              value={form.to}
+              setValue={(value) => setForm({ ...form, to: value.toString() })}
+            />
 
-          <TextAreaField
-            className="input md:col-span-2"
-            placeholder="Description / Achievements"
-            rows={4}
-            value={form.description}
-            setValue={(value) => setForm({ ...form, description: value.toString() })}
-          />
-        </div>
-        <div className="flex gap-3">
-          <button
-            onClick={addEducationHandler}
-            className="flex items-center gap-2 bg-zinc-700 text-white px-6 py-3 rounded-lg cursor-pointer hover:bg-zinc-900 transition-all"
-          >
-            <Plus />
-            {editingId ? "Update Education" : "Add Education"}
-          </button>
-          <button
-            onClick={() => setAddEducation(false)}
-            className="flex items-center gap-2 bg-zinc-300 text-zinc-700 px-6 py-3 rounded-lg cursor-pointer hover:bg-zinc-100 transition-all"
-          >
-            Cancel
-          </button>
-        </div>
-      </>}
-
+            <TextAreaField
+              className="input md:col-span-2"
+              placeholder="Description / Achievements"
+              rows={4}
+              value={form.description}
+              setValue={(value) =>
+                setForm({ ...form, description: value.toString() })
+              }
+            />
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={addEducationHandler}
+              className="flex items-center gap-2 bg-zinc-700 text-white px-6 py-3 rounded-lg cursor-pointer hover:bg-zinc-900 transition-all"
+            >
+              <Plus />
+              {editingId ? "Update Education" : "Add Education"}
+            </button>
+            <button
+              onClick={() => setAddEducation(false)}
+              className="flex items-center gap-2 bg-zinc-300 text-zinc-700 px-6 py-3 rounded-lg cursor-pointer hover:bg-zinc-100 transition-all"
+            >
+              Cancel
+            </button>
+          </div>
+        </>
+      )}
     </section>
   );
 }

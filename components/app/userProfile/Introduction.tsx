@@ -229,22 +229,6 @@ export default function IntroductionSection() {
           setValue={(v) => setForm({ ...form, about_yourself: v.toString() })}
         />
       </div>
-
-      <div className="flex gap-3">
-        <button
-          onClick={addIntroductionHandler}
-          className="flex items-center gap-2 bg-zinc-700 text-white px-6 py-3 rounded-lg hover:bg-zinc-900"
-        >
-          <Plus />
-          {editingId ? "Update Introduction" : "Add Introduction"}
-        </button>
-        <button
-          onClick={() => setAddIntroduction(false)}
-          className="flex items-center gap-2 bg-zinc-300 text-zinc-700 px-6 py-3 rounded-lg hover:bg-zinc-100"
-        >
-          Cancel
-        </button>
-      </div>
     </section>
   );
 }

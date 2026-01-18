@@ -40,6 +40,11 @@ const Sidebar = () => {
       label: "User Profile",
       link: "/app/userprofile",
     },
+    {
+      icon: <Users size={20} />,
+      label: "Job POST",
+      link: "/app/jobpost",
+    },
 
     { icon: <Briefcase size={20} />, label: "My Jobs", link: "/my-jobs" },
     {

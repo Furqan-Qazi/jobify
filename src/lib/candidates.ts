@@ -1,11 +1,13 @@
 import { supabase } from "./supabaseClient";
 
-export type Educatioin = {
-  user_id?: string | null;
-  title: string;
-  institution: string;
-  start_date: string;
-  end_date: string;
+export type Education = {
+  id: string | null;
+  school: string;
+  degree: string;
+  field: string;
+  from: string;
+  to: string;
+  description: string;
 }
 
 export type Expereince = {
@@ -55,11 +57,11 @@ export async function updateIntroduction(introduction: Introduction) {
     .single();
   return { data, error };
 }
-export async function updateEducation(education: Educatioin) {
+export async function updateEducation(education: Education[], user_id:string) {
   const { data, error } = await supabase
     .from("candidates")
     .update({ education })
-    .eq("user_id", education.user_id)
+    .eq("user_id", user_id)
     .select()
     .single();
   return { data, error };

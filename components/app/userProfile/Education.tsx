@@ -4,16 +4,9 @@ import { Edit, Plus, Trash } from "lucide-react";
 import InputField from "../../../components/global/InputField";
 import TextAreaField from "../../../components/global/TextAreaField";
 import { useState } from "react";
+import { Education, updateEducation } from "@/src/lib/candidates";
 
-type Education = {
-  id: string;
-  school: string;
-  degree: string;
-  field: string;
-  from: string;
-  to: string;
-  description: string;
-};
+
 
 export default function EducationSection() {
   const [addEducation, setAddEducation] = useState<boolean>(false);
@@ -27,6 +20,7 @@ export default function EducationSection() {
     to: "",
     description: "",
   });
+
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const addEducationHandler = () => {
@@ -66,13 +60,18 @@ export default function EducationSection() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const saveEducationHandler = () => {
+    const {userId} = JSON.parse(window.localStorage.login);
+    updateEducation(list, userId);
+  };
+
   return (
     <section className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8 space-y-8">
       <div className="flex items-center justify-between border-b pb-2">
         <h2 className="text-3xl text-gray-700 font-bold">Education</h2>
 
         <button
-          onClick={addEducationHandler}
+          onClick={saveEducationHandler}
           className="flex items-center gap-2 bg-zinc-700 text-white px-4 py-2 rounded-lg hover:bg-zinc-900"
         >
           <Plus className="w-4 h-4" />
@@ -110,7 +109,7 @@ export default function EducationSection() {
                 <Edit />
               </button>
               <button
-                onClick={() => removeEducation(e.id)}
+                onClick={() => removeEducation(e.id || "")}
                 className="text-red-500 hover:text-red-700"
                 title="Remove"
               >

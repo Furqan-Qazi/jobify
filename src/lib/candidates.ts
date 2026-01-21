@@ -4,23 +4,19 @@ import { supabase } from "./supabaseClient";
 
 export type IntroductionPayload = {
   full_name: string;
-  phone: string;
-  date_of_birth: string;
-  country: string;
-  state: string;
-  city: string;
-  address: string;
-  headline: string;
-  summary: string;
-  cv: string;
-};
-
-export type CandidateInsert = {
-  full_name: string;
   email?: string;
   user_id?: string;
-  created_at?: string;
-  [key: string]: any;
+  address: {
+    phone?: string;
+    date_of_birth?: string;
+    country?: string;
+    state?: string;
+    city?: string;
+    street?: string;
+    headline?: string;
+    about_yourself?: string;
+    cvFileName?: string;
+  };
 };
 
 /* ================= INTRO ================= */
@@ -39,10 +35,13 @@ export const updateIntroduction = async (
   userId: string,
   payload: IntroductionPayload,
 ) => {
-  // Update and return updated row
   const { data, error } = await supabase
     .from("candidates")
-    .update(payload)
+    .update({
+      full_name: payload.full_name,
+      email: payload.email,
+      address: payload.address,
+    })
     .eq("user_id", userId)
     .select()
     .single();
@@ -50,14 +49,20 @@ export const updateIntroduction = async (
   return { data, error };
 };
 
-/* ================= INSERT IF NOT EXIST ================= */
 export const insertIntroduction = async (
   userId: string,
   payload: IntroductionPayload,
 ) => {
   const { data, error } = await supabase
     .from("candidates")
-    .insert([{ user_id: userId, ...payload }])
+    .insert([
+      {
+        user_id: userId,
+        full_name: payload.full_name,
+        email: payload.email,
+        address: payload.address,
+      },
+    ])
     .select()
     .single();
 

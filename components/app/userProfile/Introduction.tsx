@@ -6,9 +6,14 @@ import TextAreaField from "../../../components/global/TextAreaField";
 import CountryStateCity from "./CountryStateCity";
 import { useState, useEffect } from "react";
 import { supabase } from "@/src/lib/supabaseClient";
-import { getCandidateIntro, updateIntroduction } from "@/src/lib/candidates";
+import {
+  getCandidateIntro,
+  updateIntroduction,
+  insertIntroduction,
+  IntroductionPayload,
+} from "@/src/lib/candidates";
 
-type Introduction = {
+type IntroductionForm = {
   id: string;
   name: string;
   email: string;
@@ -27,7 +32,7 @@ export default function IntroductionSection() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
-  const [form, setForm] = useState<Introduction>({
+  const [form, setForm] = useState<IntroductionForm>({
     id: "",
     name: "",
     email: "",
@@ -56,19 +61,20 @@ export default function IntroductionSection() {
       const { data, error } = await getCandidateIntro(user.id);
 
       if (data) {
+        const addr = data.address || {};
         setForm({
           id: user.id,
           name: data.full_name || "",
           email: user.email || "",
-          phone_number: data.phone || "",
-          to: data.date_of_birth || "",
-          address: data.address || "",
-          country: data.country || "",
-          state: data.state || "",
-          city: data.city || "",
-          line: data.headline || "",
-          about_yourself: data.summary || "",
-          cvFileName: data.cv || "",
+          phone_number: addr.phone || "",
+          to: addr.date_of_birth || "",
+          country: addr.country || "",
+          state: addr.state || "",
+          city: addr.city || "",
+          address: addr.street || "",
+          line: addr.headline || "",
+          about_yourself: addr.about_yourself || "",
+          cvFileName: addr.cvFileName || "",
         });
         setMessage("Profile loaded successfully ✅");
       }
@@ -81,45 +87,47 @@ export default function IntroductionSection() {
   const addIntroductionHandler = async () => {
     if (!userId) return;
 
-    const payload = {
-      full_name: form.name,
+    const { data: existingData } = await getCandidateIntro(userId);
+    const existingAddress = existingData?.address || {};
+
+    const newAddress = {
       phone: form.phone_number,
       date_of_birth: form.to,
       country: form.country,
       state: form.state,
       city: form.city,
-      address: form.address,
+      street: form.address,
       headline: form.line,
-      summary: form.about_yourself,
-      cv: form.cvFileName || "",
+      about_yourself: form.about_yourself,
+      cvFileName: form.cvFileName || "",
     };
 
-    try {
-      // Check if candidate already exists
-      const { data: existing, error: existErr } = await supabase
-        .from("candidates")
-        .select("user_id")
-        .eq("user_id", userId)
-        .maybeSingle();
+    // Merge old and new (new overwrites old keys)
+    const mergedAddress = { ...existingAddress, ...newAddress };
 
-      if (existErr) throw existErr;
+    const payload: IntroductionPayload = {
+      full_name: form.name,
+      email: form.email,
+      address: mergedAddress,
+    };
 
-      let res;
-      if (existing) {
-        // Update row
-        res = await updateIntroduction(userId, payload);
-        if (res.error) throw res.error;
-      } else {
-        // Insert new row
-        res = await insertIntroduction(userId, payload);
-        if (res.error) throw res.error;
-      }
+    const { data: existing } = await supabase
+      .from("candidates")
+      .select("user_id")
+      .eq("user_id", userId)
+      .maybeSingle();
 
-      setMessage("Introduction saved successfully ✅");
-    } catch (err) {
-      console.error("Save failed:", err);
-      setMessage("Failed to save ❌");
+    let error;
+    if (existing) {
+      const res = await updateIntroduction(userId, payload);
+      error = res.error;
+    } else {
+      const res = await insertIntroduction(userId, payload);
+      error = res.error;
     }
+
+    if (error) setMessage("Failed to save ❌");
+    else setMessage("Introduction saved successfully ✅");
   };
 
   if (loading)

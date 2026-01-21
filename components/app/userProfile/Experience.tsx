@@ -3,19 +3,28 @@
 import { Edit, Plus, Trash } from "lucide-react";
 import InputField from "../../../components/global/InputField";
 import TextAreaField from "../../../components/global/TextAreaField";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import {
+  Experience,
+  getCandidateExperience,
+  updateExperience,
+} from "@/src/lib/candidates";
+import { supabase } from "@/src/lib/supabaseClient";
 
-type Experience = {
-  id: string;
-  company: string;
-  jobTitle: string;
-  from: string;
-  to: string;
-  description: string;
-};
+// type Experience = {
+//   id: string;
+//   company: string;
+//   jobTitle: string;
+//   from: string;
+//   to: string;
+//   description: string;
+// };
 
 export default function ExperienceSection() {
-  const [addExperience, setAddExperience] = useState<boolean>(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState("");
+  const [addExperience, setAddExperience] = useState(false);
   const [list, setList] = useState<Experience[]>([]);
   const [form, setForm] = useState<Experience>({
     id: "",
@@ -27,13 +36,41 @@ export default function ExperienceSection() {
   });
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  // Load user + experience on mount
+  useEffect(() => {
+    const loadExperience = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      setUserId(user.id);
+
+      const { data } = await getCandidateExperience(user.id);
+
+      if (data?.experience && Array.isArray(data.experience)) {
+        setList(data.experience);
+      } else {
+        setList([]); // ensure list is always array
+      }
+
+      setLoading(false);
+    };
+
+    loadExperience();
+  }, []);
+
   const addExperienceHandler = () => {
     if (!form.company || !form.jobTitle || !form.from) return;
 
     if (editingId) {
       // EDIT
       setList((prev) =>
-        prev.map((e) => (e.id === editingId ? { ...form, id: editingId } : e))
+        prev.map((e) => (e.id === editingId ? { ...form, id: editingId } : e)),
       );
       setEditingId(null);
     } else {
@@ -63,13 +100,22 @@ export default function ExperienceSection() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const saveExperienceHandler = async () => {
+    if (!userId) return;
+    const { error } = await updateExperience(list, userId);
+    if (error) setMessage("Experience save failed ❌");
+    else setMessage("Experience saved successfully ✅");
+  };
+
+  if (loading) return <p className="text-center">Loading experience...</p>;
+
   return (
     <section className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8 space-y-8">
       <div className="flex items-center justify-between border-b pb-2">
         <h2 className="text-3xl text-gray-700 font-bold">Experience</h2>
 
         <button
-          onClick={addExperienceHandler}
+          onClick={saveExperienceHandler}
           className="flex items-center gap-2 bg-zinc-700 text-white px-4 py-2 rounded-lg hover:bg-zinc-900"
         >
           <Plus className="w-4 h-4" />
@@ -175,11 +221,12 @@ export default function ExperienceSection() {
           <div className="flex gap-3">
             <button
               onClick={addExperienceHandler}
-              className="flex items-center gap-2 bg-zinc-700 text-white px-6 py-3 rounded-lg cursor-pointer hover:bg-zinc-900 transition-all"
+              className="flex items-center gap-2 bg-zinc-700 text-white px-6 py-3 rounded-lg"
             >
               <Plus />
               {editingId ? "Update Experience" : "Add Experience"}
             </button>
+
             <button
               onClick={() => setAddExperience(false)}
               className="flex items-center gap-2 bg-zinc-300 text-zinc-700 px-6 py-3 rounded-lg cursor-pointer hover:bg-zinc-100 transition-all"

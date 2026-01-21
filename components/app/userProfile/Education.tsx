@@ -3,11 +3,19 @@
 import { Edit, Plus, Trash } from "lucide-react";
 import InputField from "../../../components/global/InputField";
 import TextAreaField from "../../../components/global/TextAreaField";
-import { useState } from "react";
-import { Education, updateEducation } from "@/src/lib/candidates";
+import { useState, useEffect } from "react";
+import {
+  Education,
+  getCandidateEducation,
+  updateEducation,
+} from "@/src/lib/candidates";
+import { supabase } from "@/src/lib/supabaseClient";
 
 export default function EducationSection() {
-  const [addEducation, setAddEducation] = useState<boolean>(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState("");
+  const [addEducation, setAddEducation] = useState(false);
   const [list, setList] = useState<Education[]>([]);
   const [form, setForm] = useState<Education>({
     id: "",
@@ -18,16 +26,42 @@ export default function EducationSection() {
     to: "",
     description: "",
   });
-
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  // Load user + education on mount
+  useEffect(() => {
+    const loadEducation = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      setUserId(user.id);
+
+      const { data } = await getCandidateEducation(user.id);
+
+      if (data?.education && Array.isArray(data.education)) {
+        setList(data.education);
+      } else {
+        setList([]); // ensure list is always array
+      }
+
+      setLoading(false);
+    };
+
+    loadEducation();
+  }, []);
 
   const addEducationHandler = () => {
     if (!form.school || !form.degree || !form.from) return;
 
     if (editingId) {
-      // EDIT
       setList((prev) =>
-        prev.map((e) => (e.id === editingId ? { ...form, id: editingId } : e))
+        prev.map((e) => (e.id === editingId ? { ...form, id: editingId } : e)),
       );
       setEditingId(null);
     } else {
@@ -43,7 +77,6 @@ export default function EducationSection() {
       to: "",
       description: "",
     });
-
     setAddEducation(false);
   };
 
@@ -58,16 +91,19 @@ export default function EducationSection() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const saveEducationHandler = () => {
-    const { userId } = JSON.parse(window.localStorage.login);
-    updateEducation(list, userId);
+  const saveEducationHandler = async () => {
+    if (!userId) return;
+    const { error } = await updateEducation(list, userId);
+    if (error) setMessage("Education save failed ❌");
+    else setMessage("Education saved successfully ✅");
   };
+
+  if (loading) return <p className="text-center">Loading education...</p>;
 
   return (
     <section className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8 space-y-8">
       <div className="flex items-center justify-between border-b pb-2">
         <h2 className="text-3xl text-gray-700 font-bold">Education</h2>
-
         <button
           onClick={saveEducationHandler}
           className="flex items-center gap-2 bg-zinc-700 text-white px-4 py-2 rounded-lg hover:bg-zinc-900"
@@ -77,9 +113,12 @@ export default function EducationSection() {
         </button>
       </div>
 
+      {/* MESSAGE */}
+      {message && <p className="text-green-500">{message}</p>}
+
       {/* LIST */}
-      <div className="space-y-4">
-        {list.map((e) => (
+      {Array.isArray(list) && list.length > 0 ? (
+        list.map((e) => (
           <div
             key={e.id}
             className="flex justify-between items-start p-4 border rounded-lg hover:shadow-lg transition-shadow duration-300"
@@ -102,26 +141,27 @@ export default function EducationSection() {
               <button
                 onClick={() => editEducation(e)}
                 className="text-blue-500 hover:text-blue-700"
-                title="Edit"
               >
                 <Edit />
               </button>
               <button
-                onClick={() => removeEducation(e.id || "")}
+                onClick={() => removeEducation(e.id)}
                 className="text-red-500 hover:text-red-700"
-                title="Remove"
               >
                 <Trash />
               </button>
             </div>
           </div>
-        ))}
-      </div>
+        ))
+      ) : (
+        <p className="text-center text-gray-500">No education added yet.</p>
+      )}
 
+      {/* ADD BUTTON */}
       {!addEducation && (
         <div
-          className="p-6 ring-2 hover:ring-lime-500 text-center bg-gray-50 rounded-lg cursor-pointer hover:shadow-md transition-all duration-300 text-zinc- hover:text-lime-500"
-          onClick={() => setAddEducation(!addEducation)}
+          className="p-6 ring-2 hover:ring-lime-500 text-center bg-gray-50 rounded-lg cursor-pointer hover:shadow-md transition-all duration-300 text-zinc-700 hover:text-lime-500"
+          onClick={() => setAddEducation(true)}
         >
           <Plus className="w-6 h-6 inline-block" />
         </div>
@@ -130,69 +170,53 @@ export default function EducationSection() {
       {/* FORM */}
       {addEducation && (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-10 p-6 rounded-lg bg-gray-50">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-6 rounded-lg bg-gray-50">
             <InputField
-              label="Fill The Form"
+              label="School / University"
               placeholder="School / University"
               value={form.school}
-              setValue={(value) =>
-                setForm({ ...form, school: value.toString() })
-              }
+              setValue={(value) => setForm({ ...form, school: value })}
             />
-
             <InputField
-              className="input mt-5"
               placeholder="Degree"
               value={form.degree}
-              setValue={(value) =>
-                setForm({ ...form, degree: value.toString() })
-              }
+              setValue={(value) => setForm({ ...form, degree: value })}
             />
-
             <InputField
-              className="input md:col-span-2"
+              className="md:col-span-2"
               placeholder="Field of Study"
               value={form.field}
-              setValue={(value) =>
-                setForm({ ...form, field: value.toString() })
-              }
+              setValue={(value) => setForm({ ...form, field: value })}
             />
-
             <InputField
-              className="input"
               placeholder="From (e.g. 2021)"
               value={form.from}
-              setValue={(value) => setForm({ ...form, from: value.toString() })}
+              setValue={(value) => setForm({ ...form, from: value })}
             />
-
             <InputField
-              className="input"
               placeholder="To (e.g. 2025)"
               value={form.to}
-              setValue={(value) => setForm({ ...form, to: value.toString() })}
+              setValue={(value) => setForm({ ...form, to: value })}
             />
-
             <TextAreaField
-              className="input md:col-span-2"
+              className="md:col-span-2"
               placeholder="Description / Achievements"
               rows={4}
               value={form.description}
-              setValue={(value) =>
-                setForm({ ...form, description: value.toString() })
-              }
+              setValue={(value) => setForm({ ...form, description: value })}
             />
           </div>
           <div className="flex gap-3">
             <button
               onClick={addEducationHandler}
-              className="flex items-center gap-2 bg-zinc-700 text-white px-6 py-3 rounded-lg cursor-pointer hover:bg-zinc-900 transition-all"
+              className="flex items-center gap-2 bg-zinc-700 text-white px-6 py-3 rounded-lg hover:bg-zinc-900"
             >
               <Plus />
               {editingId ? "Update Education" : "Add Education"}
             </button>
             <button
               onClick={() => setAddEducation(false)}
-              className="flex items-center gap-2 bg-zinc-300 text-zinc-700 px-6 py-3 rounded-lg cursor-pointer hover:bg-zinc-100 transition-all"
+              className="flex items-center gap-2 bg-zinc-300 text-zinc-700 px-6 py-3 rounded-lg hover:bg-zinc-100"
             >
               Cancel
             </button>

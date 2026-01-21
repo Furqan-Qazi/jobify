@@ -6,10 +6,7 @@ import TextAreaField from "../../../components/global/TextAreaField";
 import CountryStateCity from "./CountryStateCity";
 import { useState, useEffect } from "react";
 import { supabase } from "@/src/lib/supabaseClient";
-import {
-  getCandidateIntroduction,
-  updateIntroduction,
-} from "@/src/lib/candidates";
+import { getCandidateIntro, updateIntroduction } from "@/src/lib/candidates";
 
 type Introduction = {
   id: string;
@@ -56,12 +53,7 @@ export default function IntroductionSection() {
 
       setUserId(user.id);
 
-      // Get candidate profile
-      const { data, error } = await supabase
-        .from("candidates")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
+      const { data, error } = await getCandidateIntro(user.id);
 
       if (data) {
         setForm({
@@ -90,7 +82,6 @@ export default function IntroductionSection() {
     if (!userId) return;
 
     const payload = {
-      user_id: userId,
       full_name: form.name,
       phone: form.phone_number,
       date_of_birth: form.to,
@@ -103,24 +94,32 @@ export default function IntroductionSection() {
       cv: form.cvFileName || "",
     };
 
-    // Check if candidate exists
-    const { data: existing } = await supabase
-      .from("candidates")
-      .select("user_id")
-      .eq("user_id", userId)
-      .single();
+    try {
+      // Check if candidate already exists
+      const { data: existing, error: existErr } = await supabase
+        .from("candidates")
+        .select("user_id")
+        .eq("user_id", userId)
+        .maybeSingle();
 
-    let error;
-    if (existing) {
-      const res = await updateIntroduction(userId, payload);
-      error = res.error;
-    } else {
-      const res = await supabase.from("candidates").insert([payload]);
-      error = res.error;
+      if (existErr) throw existErr;
+
+      let res;
+      if (existing) {
+        // Update row
+        res = await updateIntroduction(userId, payload);
+        if (res.error) throw res.error;
+      } else {
+        // Insert new row
+        res = await insertIntroduction(userId, payload);
+        if (res.error) throw res.error;
+      }
+
+      setMessage("Introduction saved successfully ✅");
+    } catch (err) {
+      console.error("Save failed:", err);
+      setMessage("Failed to save ❌");
     }
-
-    if (error) setMessage("Failed to save ❌");
-    else setMessage("Introduction saved successfully ✅");
   };
 
   if (loading)

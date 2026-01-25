@@ -5,15 +5,14 @@ import { useEffect, useState } from "react";
 import InputField from "../../global/InputField";
 import TextAreaField from "../../global/TextAreaField";
 
-import { supabase } from "@/src/lib/supabaseClient";
 import {
   Employer,
   getCandidateEmployer,
-  updateEmployer,
+  saveEmployer,
+  deleteEmployer,
 } from "@/src/lib/employer";
 
 export default function EmployerSection() {
-  const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [list, setList] = useState<Employer[]>([]);
@@ -28,18 +27,10 @@ export default function EmployerSection() {
     description: "",
   });
 
-  /* LOAD EMPLOYER */
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (!data.user) {
-        setLoading(false);
-        return;
-      }
-      setUserId(data.user.id);
-
-      const { data: employers } = await getCandidateEmployer(data.user.id);
-      setList(employers || []);
+      const { data } = await getCandidateEmployer();
+      setList(data || []);
       setLoading(false);
     };
     load();
@@ -50,12 +41,14 @@ export default function EmployerSection() {
     if (!form.company_name) return;
 
     if (editingId) {
+      // EDIT existing row
       setList((prev) =>
         prev.map((e) => (e.id === editingId ? { ...form, id: editingId } : e)),
       );
       setEditingId(null);
     } else {
-      setList((prev) => [...prev, { ...form }]);
+      // ADD new row
+      setList((prev) => [...prev, { ...form, id: crypto.randomUUID() }]);
     }
 
     setForm({
@@ -68,29 +61,31 @@ export default function EmployerSection() {
     setShowForm(false);
   };
 
-  /* EDIT LOCAL */
   const editHandler = (e: Employer) => {
     setForm(e);
     setEditingId(e.id || null);
     setShowForm(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  /* DELETE LOCAL */
-  const removeHandler = (id: string) => {
-    setList((prev) => prev.filter((e) => e.id !== id));
-  };
-
-  /* SAVE TO DB */
-  const saveHandler = async () => {
-    if (!userId || list.length === 0) return;
-
-    const { data, error } = await updateEmployer(list, userId);
-
-    if (error) {
-      setMessage("Save failed ❌");
+  const removeHandler = async (id: string) => {
+    const { error } = await deleteEmployer(id);
+    if (!error) {
+      setList((prev) => prev.filter((e) => e.id !== id));
+      setMessage("Deleted successfully ✅");
     } else {
+      setMessage("Delete failed ❌");
+    }
+  };
+
+  const saveHandler = async () => {
+    if (list.length === 0) return;
+
+    const { data, error } = await saveEmployer(list);
+    if (error) setMessage("Save failed ❌");
+    else {
+      setList(data || []);
       setMessage("Saved successfully ✅");
-      setList(data || []); // update list with actual UUIDs
     }
   };
 
@@ -110,7 +105,6 @@ export default function EmployerSection() {
 
       {message && <p className="text-green-600">{message}</p>}
 
-      {/* LIST */}
       {list.length > 0 ? (
         list.map((e) => (
           <div key={e.id} className="flex justify-between border p-4 rounded">
@@ -135,7 +129,6 @@ export default function EmployerSection() {
         <p className="text-center text-gray-500">No employer added</p>
       )}
 
-      {/* ADD BUTTON */}
       {!showForm && (
         <div
           onClick={() => setShowForm(true)}
@@ -145,7 +138,6 @@ export default function EmployerSection() {
         </div>
       )}
 
-      {/* FORM */}
       {showForm && (
         <>
           <div className="grid md:grid-cols-2 gap-4 bg-gray-50 p-6 rounded">

@@ -3,122 +3,182 @@
 import { Edit, Plus, Trash } from "lucide-react";
 import InputField from "../../../components/global/InputField";
 import TextAreaField from "../../../components/global/TextAreaField";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { addJob, updateJob, deleteJob, getJobs, JobDB } from "@/src/lib/jobs";
+import { supabase } from "@/src/lib/supabaseClient";
+
+/* ================= TYPES ================= */
+type SalaryRange = {
+  min: number;
+  max: number;
+};
 
 type Job = {
   id: string;
   JobTittle: string;
   company_name: string;
-  number_of_people_required: string;
-  from: string;
-  salary: string;
+  employment_type: string;
+  // from: string;
+  salary: SalaryRange;
   location: string;
   JobDescription: string;
 };
 
+/* ================= COMPONENT ================= */
 export default function JobPost() {
-  const [addJob, setAddJob] = useState<boolean>(false);
+  const [addJobForm, setAddJobForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [list, setList] = useState<Job[]>([]);
   const [form, setForm] = useState<Job>({
     id: "",
     JobTittle: "",
     company_name: "",
-    number_of_people_required: "",
-    from: "",
-    salary: "",
+    employment_type: "",
+    // from: "",
+    salary: { min: 30000, max: 80000 },
     location: "",
     JobDescription: "",
   });
-  const [editingId, setEditingId] = useState<string | null>(null);
 
-  const addJobHandler = () => {
-    if (!form.JobTittle || !form.company_name || !form.from) return;
+  const [employerId, setEmployerId] = useState<string>("");
+
+  // ================= GET EMPLOYER ID =================
+  useEffect(() => {
+    const getUser = async () => {
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+      if (error) return console.error(error.message);
+      if (user) setEmployerId(user.id);
+    };
+    getUser();
+  }, []);
+
+  // ================= LOAD JOBS =================
+  useEffect(() => {
+    if (!employerId) return;
+    const loadJobs = async () => {
+      const { data, error } = await getJobs(employerId);
+      if (error) return console.error(error.message);
+      if (data) {
+        const jobs = data.map((job: any) => ({
+          id: job.id,
+          JobTittle: job.job_title,
+          company_name: job.company_name || "",
+          employment_type: job.employment_type || "",
+          // from: job.from || "",
+          salary: {
+            min: job.salary_min || 30000,
+            max: job.salary_max || 80000,
+          },
+          location: job.location || "",
+          JobDescription: job.job_description || "",
+        }));
+        setList(jobs);
+      }
+    };
+    loadJobs();
+  }, [employerId]);
+
+  // ================= ADD / UPDATE JOB =================
+  const handleAddOrUpdateJob = async () => {
+    if (!form.JobTittle || !form.company_name || !employerId) return;
+
+    const payload: JobDB = {
+      job_title: form.JobTittle,
+      company_name: form.company_name,
+      employment_type: form.employment_type,
+      // from: form.from,
+      salary_min: form.salary.min,
+      salary_max: form.salary.max,
+      location: form.location,
+      job_description: form.JobDescription,
+      employer_id: employerId,
+    };
 
     if (editingId) {
-      // EDIT
+      const { data, error } = await updateJob(editingId, payload);
+      if (error) return alert("Update failed: " + error.message);
       setList((prev) =>
-        prev.map((e) => (e.id === editingId ? { ...form, id: editingId } : e))
+        prev.map((j) => (j.id === editingId ? { ...form, id: editingId } : j)),
       );
       setEditingId(null);
     } else {
-      setList((prev) => [...prev, { ...form, id: Date.now().toString() }]);
+      const { data, error } = await addJob(payload);
+      if (error) return alert("Insert failed: " + error.message);
+      setList((prev) => [...prev, { ...form, id: data.id }]);
     }
 
     setForm({
       id: "",
       JobTittle: "",
       company_name: "",
-      number_of_people_required: "",
-      from: "",
-      salary: "",
+      employment_type: "",
+      // from: "",
+      salary: { min: 30000, max: 80000 },
       location: "",
       JobDescription: "",
     });
-
-    setAddJob(false);
+    setAddJobForm(false);
   };
 
-  const removeJob = (id: string) => {
-    setList((prev) => prev.filter((e) => e.id !== id));
+  // ================= DELETE JOB =================
+  const handleDeleteJob = async (id: string) => {
+    const { error } = await deleteJob(id);
+    if (error) return alert("Delete failed: " + error.message);
+    setList((prev) => prev.filter((j) => j.id !== id));
   };
 
-  const editJob = (e: Job) => {
-    setForm(e);
-    setEditingId(e.id);
-    setAddJob(true);
+  // ================= EDIT JOB =================
+  const handleEditJob = (job: Job) => {
+    setForm(job);
+    setEditingId(job.id);
+    setAddJobForm(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  /* ================= UI ================= */
   return (
     <section className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8 space-y-8">
-      <div className="flex items-center justify-between border-b pb-2">
-        <h2 className="text-3xl text-gray-700 font-bold">Job</h2>
-
+      <div className="flex justify-between items-center border-b pb-2">
+        <h2 className="text-3xl font-bold text-gray-700">Job</h2>
         <button
-          onClick={addJobHandler}
-          className="flex items-center gap-2 bg-zinc-700 text-white px-4 py-2 rounded-lg hover:bg-zinc-900"
+          onClick={handleAddOrUpdateJob}
+          className="flex items-center gap-2 bg-zinc-700 text-white px-4 py-2 rounded-lg"
         >
-          <Plus className="w-4 h-4" />
-          Save
+          {editingId ? "Update Job" : "Save Job"} <Plus size={16} />
         </button>
       </div>
 
-      {/* LIST */}
+      {/* JOB LIST */}
       <div className="space-y-4">
-        {list.map((e) => (
+        {list.map((job) => (
           <div
-            key={e.id}
-            className="flex justify-between items-start p-4 border rounded-lg hover:shadow-lg transition-shadow duration-300"
+            key={job.id}
+            className="flex justify-between p-4 border rounded-lg"
           >
-            <div className="space-y-1">
-              <h3 className="font-semibold text-gray-700 text-lg">
-                {e.JobTittle}
-              </h3>
-              <p className="text-sm text-gray-700">
-                {e.company_name} — {e.number_of_people_required || "N/A"}
+            <div>
+              <h3 className="font-semibold">{job.JobTittle}</h3>
+              <p className="text-sm text-gray-600">
+                {job.company_name} — {job.employment_type || "N/A"}
               </p>
-              <p className="text-xs text-gray-500">
-                {e.from} – {e.salary || "Present"}
+              <p className="text-sm">
+                Rs {job.salary.min.toLocaleString()} – Rs{" "}
+                {job.salary.max.toLocaleString()}
               </p>
-              <p className="text-xs text-gray-500">
-                📍 {e.location || "Location not specified"}
-              </p>
-              {e.JobDescription && (
-                <p className="text-sm mt-2 text-gray-500">{e.JobDescription}</p>
-              )}
+              <p className="text-xs text-gray-500">📍 {job.location}</p>
             </div>
-            <div className="flex gap-2 mt-1">
+            <div className="flex gap-2">
               <button
-                onClick={() => editJob(e)}
-                className="text-blue-500 hover:text-blue-700"
-                title="Edit"
+                onClick={() => handleEditJob(job)}
+                className="text-blue-600"
               >
                 <Edit />
               </button>
               <button
-                onClick={() => removeJob(e.id)}
-                className="text-red-500 hover:text-red-700"
-                title="Remove"
+                onClick={() => handleDeleteJob(job.id)}
+                className="text-red-600"
               >
                 <Trash />
               </button>
@@ -127,88 +187,106 @@ export default function JobPost() {
         ))}
       </div>
 
-      {!addJob && (
+      {!addJobForm && (
         <div
-          className="p-6 ring-2 hover:ring-lime-500 text-center bg-gray-50 rounded-lg cursor-pointer hover:shadow-md transition-all duration-300 text-zinc- hover:text-lime-500"
-          onClick={() => setAddJob(!addJob)}
+          onClick={() => setAddJobForm(true)}
+          className="p-6 text-center bg-gray-50 rounded-lg cursor-pointer"
         >
-          <Plus className="w-6 h-6 inline-block" />
+          <Plus className="inline-block" />
         </div>
       )}
 
-      {/* FORM */}
-      {addJob && (
+      {/* JOB FORM */}
+      {addJobForm && (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-10 p-6 rounded-lg bg-gray-50">
+          <div className="grid md:grid-cols-2 gap-4 bg-gray-50 p-6 rounded-lg">
             <InputField
-              label="Fill your JOB Post details"
-              placeholder="JobTittle "
+              label="Job Title"
               value={form.JobTittle}
-              setValue={(value) =>
-                setForm({ ...form, JobTittle: value.toString() })
-              }
+              setValue={(v) => setForm({ ...form, JobTittle: v })}
             />
-
             <InputField
-              className="input mt-5"
-              placeholder="company_name"
+              placeholder="Company Name"
               value={form.company_name}
-              setValue={(value) =>
-                setForm({ ...form, company_name: value.toString() })
-              }
+              setValue={(v) => setForm({ ...form, company_name: v })}
             />
-
             <InputField
-              className="input md:col-span-2"
-              placeholder="Peoples Are Required"
-              value={form.number_of_people_required}
-              setValue={(value) =>
-                setForm({
-                  ...form,
-                  number_of_people_required: value.toString(),
-                })
-              }
+              placeholder="Employment Type"
+              value={form.employment_type}
+              setValue={(v) => setForm({ ...form, employment_type: v })}
             />
-
             <InputField
-              className="input"
-              placeholder="Location (e.g. Lahore, Remote)"
+              placeholder="Location"
               value={form.location}
-              setValue={(value) =>
-                setForm({ ...form, location: value.toString() })
-              }
+              setValue={(v) => setForm({ ...form, location: v })}
             />
 
-            <InputField
-              className="input"
-              placeholder="Salary"
-              value={form.salary}
-              setValue={(value) =>
-                setForm({ ...form, salary: value.toString() })
-              }
-            />
+            {/* SALARY RANGE */}
+            <div className="md:col-span-2 space-y-2">
+              <label className="text-sm font-medium text-gray-600">
+                Salary Range
+              </label>
+              <div className="relative">
+                <input
+                  type="range"
+                  min={0}
+                  max={300000}
+                  step={5000}
+                  value={form.salary.min}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      salary: {
+                        ...form.salary,
+                        min: Math.min(+e.target.value, form.salary.max - 5000),
+                      },
+                    })
+                  }
+                  className="w-full absolute"
+                />
+                <input
+                  type="range"
+                  min={0}
+                  max={300000}
+                  step={5000}
+                  value={form.salary.max}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      salary: {
+                        ...form.salary,
+                        max: Math.max(+e.target.value, form.salary.min + 5000),
+                      },
+                    })
+                  }
+                  className="w-full"
+                />
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Min: Rs {form.salary.min.toLocaleString()}</span>
+                <span>Max: Rs {form.salary.max.toLocaleString()}</span>
+              </div>
+            </div>
 
             <TextAreaField
-              className="input md:col-span-2"
-              placeholder="JobDescription"
+              className="md:col-span-2"
+              placeholder="Job Description"
               rows={4}
               value={form.JobDescription}
-              setValue={(value) =>
-                setForm({ ...form, JobDescription: value.toString() })
-              }
+              setValue={(v) => setForm({ ...form, JobDescription: v })}
             />
           </div>
+
           <div className="flex gap-3">
             <button
-              onClick={addJobHandler}
-              className="flex items-center gap-2 bg-zinc-700 text-white px-6 py-3 rounded-lg cursor-pointer hover:bg-zinc-900 transition-all"
+              onClick={handleAddOrUpdateJob}
+              className="bg-zinc-700 text-white px-6 py-3 rounded-lg"
             >
-              <Plus />
               {editingId ? "Update Job" : "Add Job"}
             </button>
             <button
-              onClick={() => setAddJob(false)}
-              className="flex items-center gap-2 bg-zinc-300 text-zinc-700 px-6 py-3 rounded-lg cursor-pointer hover:bg-zinc-100 transition-all"
+              onClick={() => setAddJobForm(false)}
+              className="bg-zinc-300 px-6 py-3 rounded-lg"
             >
               Cancel
             </button>

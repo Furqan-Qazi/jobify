@@ -175,35 +175,35 @@ export default function EducationSection() {
               label="School / University"
               placeholder="School / University"
               value={form.school}
-              setValue={(value) => setForm({ ...form, school: value })}
+              setValue={(value) => setForm({ ...form, school: value.toString() })}
             />
             <InputField
               placeholder="Degree"
               value={form.degree}
-              setValue={(value) => setForm({ ...form, degree: value })}
+              setValue={(value) => setForm({ ...form, degree: value.toString() })}
             />
             <InputField
               className="md:col-span-2"
               placeholder="Field of Study"
               value={form.field}
-              setValue={(value) => setForm({ ...form, field: value })}
+              setValue={(value) => setForm({ ...form, field: value.toString() })}
             />
             <InputField
               placeholder="From (e.g. 2021)"
               value={form.from}
-              setValue={(value) => setForm({ ...form, from: value })}
+              setValue={(value) => setForm({ ...form, from: value.toString() })}
             />
             <InputField
               placeholder="To (e.g. 2025)"
               value={form.to}
-              setValue={(value) => setForm({ ...form, to: value })}
+              setValue={(value) => setForm({ ...form, to: value.toString() })}
             />
             <TextAreaField
               className="md:col-span-2"
               placeholder="Description / Achievements"
               rows={4}
               value={form.description}
-              setValue={(value) => setForm({ ...form, description: value })}
+              setValue={(value) => setForm({ ...form, description: value.toString() })}
             />
           </div>
           <div className="flex gap-3">

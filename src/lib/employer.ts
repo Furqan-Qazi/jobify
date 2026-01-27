@@ -10,26 +10,44 @@ export type Employer = {
 };
 
 /* GET EMPLOYERS */
-export const getCandidateEmployer = async () => {
+export const getCandidateEmployer = async (userId:string) => {
   const { data, error } = await supabase
     .from("employers")
     .select("*")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .eq("user_id", userId)
+    .single();
   return { data, error };
 };
 
 /* UPSERT / SAVE EMPLOYER */
-export const saveEmployer = async (employers: Employer[]) => {
-  // Ensure each row has id for upsert
-  const payload = employers.map((e) => ({
-    id: e.id || undefined, // undefined = insert new
-    company_name: e.company_name,
-    industry: e.industry || null,
-    company_size: e.company_size || null,
-    website: e.website || null,
-    description: e.description || null,
-  }));
+export const saveEmployer = async (employers: Employer, userId:string) => {
+  const {data:userData, error:userError} = await getCandidateEmployer(userId);
+  if (userError) {
+    return { data: null, error: userError };
+  }
 
+  const payload = {
+    company_name: employers.company_name,
+    industry: employers.industry,
+    company_size: employers.company_size,
+    website: employers.website,
+    description: employers.description,
+    user_id: userId,
+  };
+
+  if(userData?.id) {
+    const {data, error} = await supabase
+      .from("employers")
+      .update(payload)
+      .eq("id", userData.id)
+      .select();
+    if (error) {
+      return { data: null, error };
+    }
+    return { data, error: null };
+  }
+  
   const { data, error } = await supabase
     .from("employers")
     .upsert(payload, { onConflict: "id" }) // upsert by id

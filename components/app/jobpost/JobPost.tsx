@@ -6,6 +6,7 @@ import TextAreaField from "../../../components/global/TextAreaField";
 import { useState, useEffect } from "react";
 import { addJob, updateJob, deleteJob, getJobs, JobDB } from "@/src/lib/jobs";
 import { supabase } from "@/src/lib/supabaseClient";
+import { getCandidateEmployer } from "@/src/lib/employer";
 
 /* ================= TYPES ================= */
 type SalaryRange = {
@@ -50,7 +51,12 @@ export default function JobPost() {
         error,
       } = await supabase.auth.getUser();
       if (error) return console.error(error.message);
-      if (user) setEmployerId(user.id);
+      if (user) {
+        const {data, error} = await getCandidateEmployer(user.id);
+        if (error) return console.error(error.message);
+        if (data) setEmployerId(data.id);
+        console.log(data);
+      }
     };
     getUser();
   }, []);
@@ -203,22 +209,22 @@ export default function JobPost() {
             <InputField
               label="Job Title"
               value={form.JobTittle}
-              setValue={(v) => setForm({ ...form, JobTittle: v })}
+              setValue={(v) => setForm({ ...form, JobTittle: v as string })}
             />
             <InputField
               placeholder="Company Name"
               value={form.company_name}
-              setValue={(v) => setForm({ ...form, company_name: v })}
+              setValue={(v) => setForm({ ...form, company_name: v as string })}
             />
             <InputField
               placeholder="Employment Type"
               value={form.employment_type}
-              setValue={(v) => setForm({ ...form, employment_type: v })}
+              setValue={(v) => setForm({ ...form, employment_type: v as string })}
             />
             <InputField
               placeholder="Location"
               value={form.location}
-              setValue={(v) => setForm({ ...form, location: v })}
+              setValue={(v) => setForm({ ...form, location: v as string })}
             />
 
             {/* SALARY RANGE */}
@@ -273,7 +279,7 @@ export default function JobPost() {
               placeholder="Job Description"
               rows={4}
               value={form.JobDescription}
-              setValue={(v) => setForm({ ...form, JobDescription: v })}
+              setValue={(v) => setForm({ ...form, JobDescription: v as string })}
             />
           </div>
 
